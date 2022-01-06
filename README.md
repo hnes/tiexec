@@ -13,8 +13,8 @@ You should wait for its v1.0 release if you want to use it in production.
 # Synopsis
 
 ```bash
-$ tiexec /bin/echo -e "Hi, I'm loaded by tiexec ❤️\nIt may try to make me more performant ☺\n"
-Hi, I'm loaded by tiexec ❤️
+$ tiexec /bin/echo -e "Hi, I am loaded by tiexec ❤️\nIt may try to make me more performant ☺\n"
+Hi, I am loaded by tiexec ❤️
 It may try to make me more performant ☺
 
 $ tiexec /usr/local/go/bin/go version
