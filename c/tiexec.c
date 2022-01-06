@@ -28,7 +28,7 @@
 #include <syscall.h>
 #include <sys/ptrace.h>
 
-char * helperPath = "/root/.tiexec/helper";
+char * helperPath = "/root/.tiexec/bin/tiexec-helper";
 
 #define FATAL(...) \
     do { \

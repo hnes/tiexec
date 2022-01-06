@@ -41,18 +41,49 @@ For example, the .text segment size of some components in TiDB is from ~46MB to 
 
 # Build and Have a Try
 
-## Build
+## Build & Setup
 
-WIP
+```bash
+$ cd $ROOT_OF_SRC
+$ go build -o tiexec-helper helper.go
+$ cd c
+$ gcc tiexec.c -o tiexec
+```
+
+Install (need to be root):
+
+```bash
+$ mkdir -p /root/.tiexec/bin
+$ cp -f $ROOT_OF_SRC/tiexec-helper /root/.tiexec/bin/
+$ cp -f $ROOT_OF_SRC/c/tiexec /root/.tiexec/bin/
+```
+
+Setup Env (need to be root):
+
+```bash
+$ export PATH=/root/.tiexec/bin:$PATH
+# tell kernel to rereserve some hugepages for us
+$ echo 500 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+# have a check
+$ cat /proc/meminfo | grep -P Huge
+AnonHugePages:     49152 kB
+HugePages_Total:     500 // <-- success
+HugePages_Free:      500 // <-- 500 pages available
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+```
 
 ## Have a Try
+
+Run (need to be root):
 
 ```bash
 $ tiexec /bin/echo -e "Hi, I am loaded by tiexec ❤️\n"
 Hi, I am loaded by tiexec ❤️
 ```
 
-Now let's have a try on TiDB-Server.
+Now let's have a try on TiDB-Server:
 
 ```bash
 $ tiexec ./tidb-server # args is following...
