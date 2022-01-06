@@ -104,14 +104,31 @@ uint64_t dumpSyscallRet(){
 }
 
 void myWait(){
+    myWaitHelper(1);
+}
+
+void myWaitHelper(int fatalFlag){
     pid_t pid = traceePid;
     int wstatus;
-    if (waitpid(pid, &wstatus, 0) == -1)
-        my_log_fatal("%s", strerror(errno));
+    if (waitpid(pid, &wstatus, 0) == -1){
+        if(fatalFlag!=0){
+            my_log_fatal("%s", strerror(errno));
+        }else{
+            log_info("%s", strerror(errno));
+        }
+    }
     if (WIFEXITED(wstatus)) {
-        my_log_fatal("exited, status=%d\n", WEXITSTATUS(wstatus));
+        if(fatalFlag!=0){
+            my_log_fatal("exited, status=%d\n", WEXITSTATUS(wstatus));
+        }else{
+            log_info("exited, status=%d\n", WEXITSTATUS(wstatus));
+        }
     } else if (WIFSIGNALED(wstatus)) {
-        my_log_fatal("killed by signal %d\n", WTERMSIG(wstatus));
+        if(fatalFlag!=0){
+            my_log_fatal("killed by signal %d\n", WTERMSIG(wstatus));
+        }else{
+            log_info("killed by signal %d\n", WTERMSIG(wstatus));
+        }
     } else {}
 }
 
@@ -406,7 +423,8 @@ main(int argc, char **argv)
         }
         log_info("done :-D\n");
         log_info("getchar and exit:\n");
-        getchar();
+        myWaitHelper(0);
+        return 0;
     }else{
         my_log_fatal("unexecpted end");
     }
