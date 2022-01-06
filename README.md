@@ -47,13 +47,14 @@ For example, the .text segment size of some components in TiDB is from ~46MB to 
 $ cd $ROOT_OF_SRC
 $ go build -o tiexec-helper helper.go
 $ cd c
-$ gcc tiexec.c -o tiexec
+$ gcc -I log/ tiexec.c log/log.c -o tiexec
 ```
 
 Install (need to be root):
 
 ```bash
 $ mkdir -p /root/.tiexec/bin
+$ mkdir -p /root/.tiexec/log
 $ cp -f $ROOT_OF_SRC/tiexec-helper /root/.tiexec/bin/
 $ cp -f $ROOT_OF_SRC/c/tiexec /root/.tiexec/bin/
 ```
