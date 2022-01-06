@@ -27,6 +27,8 @@ import (
 	"strings"
 	"syscall"
 	"unsafe"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -37,27 +39,45 @@ const (
 
 var glOnlyExecReMmap = true
 
+var glLogFileName string
+var glTracerLogFileName string
+
 func AssertNoErr(err error) {
 	if err == nil {
 	} else {
-		debug.PrintStack()
-		panic(err)
+		MyPanicln(err)
 	}
 }
+
 func Assert(b bool) {
 	if b {
 	} else {
-		debug.PrintStack()
-		panic(b)
+		MyPanicln(b)
 	}
 }
 
 func MyPrintf(format string, a ...interface{}) {
-	fmt.Fprintf(os.Stderr, format, a...)
+	//fmt.Fprintf(os.Stderr, format, a...)
+	logrus.Infof(format, a...)
 }
 
 func MyPrintln(a ...interface{}) {
+	//fmt.Fprintln(os.Stderr, a...)
+	logrus.Infoln(a...)
+}
+
+func MyPanicf(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, "tracerLogFileName:%s, heplerLogFileName:%s", glTracerLogFileName, glLogFileName)
+	fmt.Fprintf(os.Stderr, format, a...)
+	debug.PrintStack()
+	logrus.Panicf(format, a...)
+}
+
+func MyPanicln(a ...interface{}) {
+	fmt.Fprintf(os.Stderr, "tracerLogFileName:%s, heplerLogFileName:%s", glTracerLogFileName, glLogFileName)
 	fmt.Fprintln(os.Stderr, a...)
+	debug.PrintStack()
+	logrus.Panicln(a...)
 }
 
 /*
@@ -543,7 +563,7 @@ func (h *Helper) AnalyzeAndSnapshot() {
 
 var nativeEndian binary.ByteOrder
 
-func init() {
+func initEndian() {
 	buf := [2]byte{}
 	*(*uint16)(unsafe.Pointer(&buf[0])) = uint16(0xABCD)
 
@@ -638,16 +658,18 @@ func (h *Helper) Exit() {
 }
 
 func main() {
-	if len(os.Args) < 5 {
+	if len(os.Args) < 7 {
 		MyPrintln("more args need")
 		os.Exit(1)
 	}
 
-	var tracerPidStr, cmdHeaderAddrStr, traceePidStr, ipOffsetStr string
-	tracerPidStr = os.Args[1]
-	cmdHeaderAddrStr = os.Args[2]
-	traceePidStr = os.Args[3]
-	ipOffsetStr = os.Args[4]
+	var logFileName, tracerLogFileName, tracerPidStr, cmdHeaderAddrStr, traceePidStr, ipOffsetStr string
+	logFileName = os.Args[1]
+	tracerLogFileName = os.Args[2]
+	tracerPidStr = os.Args[3]
+	cmdHeaderAddrStr = os.Args[4]
+	traceePidStr = os.Args[5]
+	ipOffsetStr = os.Args[6]
 	tracerPid, err := strconv.ParseUint(tracerPidStr, 10, 64)
 	AssertNoErr(err)
 	cmdHeaderAddr, err := strconv.ParseUint(cmdHeaderAddrStr, 10, 64)
@@ -656,8 +678,19 @@ func main() {
 	AssertNoErr(err)
 	traceeInitialIP, err := strconv.ParseUint(ipOffsetStr, 10, 64)
 	AssertNoErr(err)
-	MyPrintf("%d,%d,%d,%d\n", tracerPid, cmdHeaderAddr, traceePid, traceeInitialIP)
-
+	glLogFileName = logFileName
+	glTracerLogFileName = tracerLogFileName
+	{
+		f, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		if err != nil {
+			MyPrintf("%s,%s,%d,%d,%d,%d\n", logFileName, tracerLogFileName, tracerPid, cmdHeaderAddr, traceePid, traceeInitialIP)
+			MyPanicf("failed to open log file %s, err:%s", logFileName, err)
+		}
+		logrus.SetOutput(f)
+		MyPrintf("%s,%s,%d,%d,%d,%d\n", logFileName, tracerLogFileName, tracerPid, cmdHeaderAddr, traceePid, traceeInitialIP)
+		logrus.Infof("tracerLogFileName:%s, heplerLogFileName:%s", tracerLogFileName, logFileName)
+	}
+	initEndian()
 	h := NewHelper(int(tracerPid), int(traceePid), traceeInitialIP, cmdHeaderAddr, os.Stdout, os.Stdin)
 	h.AnalyzeAndSnapshot()
 	h.GetCmdBodyAddrFromTracer()

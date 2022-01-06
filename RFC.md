@@ -5,14 +5,14 @@
 ### 用法
 
 ```bash
-$ tiexec /bin/echo -e "Hi, I am loaded by tiexec ❤️\nIt may try to make me more performant ☺\n"
+$ tiexec echo -e "Hi, I am loaded by tiexec ❤️\nIt may try to make me more performant ☺\n"
 Hi, I am loaded by tiexec ❤️
 It may try to make me more performant ☺
 
-$ tiexec /usr/local/go/bin/go version
+$ tiexec go version
 go version go1.16.4 linux/amd64
 
-$ tiexec /root/.cargo/bin/rustc -V
+$ tiexec rustc -V
 rustc 1.55.0 (c8dfcfe04 2021-09-06)
 
 $ tiexec bin/pd-server ...
