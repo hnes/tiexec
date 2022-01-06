@@ -83,3 +83,5 @@ text of bin tikv
 ![procedure](doc/img/procedure-draft.png)
 
 上图即为最终的实现，中间为 tracer，左侧为 helper，右侧为我们想要优化的任意 elf 程序，称之为 tracee。核心思想是 tracer 通过借助 [ptrace](https://man7.org/linux/man-pages/man2/ptrace.2.html) 和其他 syscall 控制 tracee 的执行、暂停以及控制其寄存器的值（即等于可以控制 tracee 做任何我们想让它做的事情），helper 通过 `/proc/$pidOfTracee/(maps)|(numa_maps)|(mem)` 等内核提供的接口对 tracee 做内存布局分析、内存备份、控制指令生成与载入、页面 re-mmap、内存恢复等操作。
+
+欢迎阅读 [README](README.md) 中的使用文档和试用。
