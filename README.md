@@ -35,13 +35,72 @@ $ tiexec bin/bin/grafana-server ...
 
 # Description
 
-TiExec will try to alleviate the iTLB-Cache-Miss problem of the application it loaded may face in future execution, so it will bring some direct performance improvement to those applications that are being punished by iTLB-Cache-Miss problem. Generally speaking, one program may face such iTLB-Cache-Miss if the .text segment of its elf is very large. 
+TiExec will try to alleviate the iTLB-Cache-Miss problem of the application it loaded, so it will bring some direct performance improvement to those applications that are being punished by iTLB-Cache-Miss problem. Generally speaking, one program may face such iTLB-Cache-Miss problem if its .text segment is too large. 
 
-For example, the .text size of some components in TiDB is from ~46MB to ~160MB, and a test in an OLTP scenario of TiDB with these components optimized by TiExec shows that it could bring about an overall 6-11% performance improvement directly.
+For example, the .text segment size of some components in TiDB is from ~46MB to ~160MB, and a test in an OLTP scenario of TiDB with these components optimized by TiExec shows that it could bring about an overall 6-11% performance improvement directly.
 
 # Build and Have a Try
 
+## Build
+
 WIP
+
+## Have a Try
+
+```bash
+$ tiexec /bin/echo -e "Hi, I am loaded by tiexec ❤️\n"
+Hi, I am loaded by tiexec ❤️
+```
+
+Now let's have a try on TiDB-Server.
+
+```bash
+$ tiexec ./tidb-server # args is following...
+```
+
+Here is the memory maps when `tidb-server` reaches its entry point:
+
+```bash
+$ cat /proc/$pid_of_tidb_server/maps
+00400000-0579a000 r-xp 00000000 00:2d 370                                /mnt/down/tarball/tidb-server
+05999000-060b3000 rw-p 05399000 00:2d 370                                /mnt/down/tarball/tidb-server
+... ...
+$ cat /proc/$pid_of_tidb_server/numa_maps
+00400000 default file=/mnt/down/tarball/tidb-server mapped=21402 active=1 N0=21402 kernelpagesize_kB=4
+05999000 default file=/mnt/down/tarball/tidb-server anon=1 dirty=1 N0=1 kernelpagesize_kB=4
+... ...
+```
+
+We can see that the .text segment of `tidb-server` is very large, ~83.6 MB, and it takes about *21402* 4KB-pages to map them.
+
+And here is after `tiexec` optimized:
+
+```bash
+$ cat /proc/$pid_of_tidb_server/maps
+00400000-05600000 r-xp 00000000 00:0e 454903                             /anon_hugepage (deleted)
+05600000-0579a000 r-xp 00000000 00:00 0
+05999000-060b3000 rw-p 05399000 00:2d 370                                /mnt/down/tarball/tidb-server
+... ...
+$ cat /proc/$pid_of_tidb_server/numa_maps
+00400000 default file=/anon_hugepage\040(deleted) huge anon=41 dirty=41 N0=41 kernelpagesize_kB=2048
+05600000 default anon=410 dirty=410 N0=410 kernelpagesize_kB=4
+05999000 default file=/mnt/down/tarball/tidb-server anon=1 dirty=1 N0=1 kernelpagesize_kB=4
+... ...
+```
+
+Now it takes only *451* pages to map them, i.e. *41* 2MB-hugepages and *410* 4KB-pages. 
+
+```python
+>>> 451/21402.0 - 1
+-0.9789272030651341
+```
+
+And further more, for many occasions, these *410* 4KB-pages still could be optimized into one 2MB-hugepage. And that would be:
+
+```python
+>>> 42/21402.0 - 1
+-0.9980375665825624
+```
 
 # Design
 

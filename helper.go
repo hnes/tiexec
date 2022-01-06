@@ -490,6 +490,7 @@ func (h *Helper) dumpTraceeMapUnits() {
 func (h *Helper) AnalyzeAndSnapshot() {
 	h.traceeMapUnits = parseProcMapsFile(h.traceeProMem.GetProcMapsPath())
 	h.dumpTraceeMapUnits()
+	defer h.dumpTraceeMapUnits()
 	h.tryToExclueTheMapUintsWhichContainInitialIP()
 	for _, u := range h.traceeMapUnits {
 		Assert(u.Size > 0)
