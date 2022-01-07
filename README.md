@@ -37,7 +37,9 @@ $ tiexec bin/bin/grafana-server ...
 
 TiExec will try to alleviate the iTLB-Cache-Miss problem of the application it loaded, so it will bring some direct performance improvement to those applications that are being punished by iTLB-Cache-Miss problem. Generally speaking, one program may face such iTLB-Cache-Miss problem if its .text segment is too large. 
 
-For example, the .text segment size of some components in TiDB is from ~46MB to ~160MB, and a test in an OLTP scenario of TiDB with these components optimized by TiExec shows that it could bring about an overall 6-11% performance improvement directly.
+For example, the .text segment size of some components in TiDB is from ~46MB to ~160MB, and a test in an OLTP scenario of TiDB with these components optimized by TiExec shows that it could bring about an overall 6-11% performance improvement directly. Here is more detailed information about this test:
+
+> In one OLTP scenario of TiDB, the tidb-server suffers 68.62% iTLB-Cache-Miss, overall TPS is 307.68/sec, medium latency is 62.22 ms. After TiExec is used, iTLB-Cache-Miss reduced to 47.1% (- ~31%), overall TPS became 341.35/sec (+10.9%), medium latency became 56.32 ms (-9.5%).
 
 # Build and Have a Try
 
@@ -136,7 +138,7 @@ And further more, for many occasions, these *410* * 4KB-pages still could be opt
 
 # Design
 
-Basically, TiExec try to re-mmap the .text area of one process to hugepages as much area as possible.
+Basically, TiExec try to re-mmap the .text area of one process to hugepages (as much area as possible).
 
 For example, if one .text segment of a process has a range of 0x5ff000 - 0xc10000, TiExec will re-mmap this big area into 3 small areas:
 
@@ -181,6 +183,8 @@ The point is, every time Tracee blocks at enter-syscall, Tracer will replace the
 Suport something like `runuser`.
 
 Support Linux ARM64.
+
+Support something like `GODEBUG`.
 
 Support re-mmap on dynamic loading library.
 
