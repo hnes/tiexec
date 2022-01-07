@@ -103,10 +103,6 @@ uint64_t dumpSyscallRet(){
     return (uint64_t)regs.rax;
 }
 
-void myWait(){
-    myWaitHelper(1);
-}
-
 void myWaitHelper(int fatalFlag){
     pid_t pid = traceePid;
     int wstatus;
@@ -130,6 +126,10 @@ void myWaitHelper(int fatalFlag){
             log_info("killed by signal %d\n", WTERMSIG(wstatus));
         }
     } else {}
+}
+
+void myWait(){
+    myWaitHelper(1);
 }
 
 void readOneByteFromPipe(){
